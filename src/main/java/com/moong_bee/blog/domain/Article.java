@@ -1,8 +1,6 @@
 package com.moong_bee.blog.domain;
 
-import java.sql.Date;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
