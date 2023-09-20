@@ -1,5 +1,6 @@
 package com.moong_bee.blog.domain;
 
+import java.sql.Date;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -29,12 +30,12 @@ public class Article {
     private String content;
 
     @Column(name = "date", nullable = false)
-    private String date;
+    private LocalDateTime date;
 
     @Builder
     public Article(String title, String content) {
         this.title = title;
         this.content = content;
-        this.date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        this.date = LocalDateTime.now();
     }
 }

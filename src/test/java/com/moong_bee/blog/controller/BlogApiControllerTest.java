@@ -1,9 +1,12 @@
 package com.moong_bee.blog.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -65,5 +68,26 @@ public class BlogApiControllerTest {
         assertThat(articles.size()).isEqualTo(1);
         assertThat(articles.get(0).getTitle()).isEqualTo(title);
         assertThat(articles.get(0).getContent()).isEqualTo(content);
+    }
+
+    @DisplayName("findAllArticles: 블로그 글 목록 조회")
+    @Test
+    public void findAllArticles() throws Exception {
+        final String url = "/api/articles";
+        final String title = "title";
+        final String content = "content";
+        final LocalDateTime date = LocalDateTime.now();
+
+        blogRepository.save(Article.builder()
+                                .title(title)
+                                .content(content)
+                                .build());
+
+        final ResultActions resultActions = mockMvc.perform(get(url).accept(MediaType.APPLICATION_JSON));
+
+        resultActions
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[0].content").value(content))
+            .andExpect(jsonPath("$[0].title").value(title));
     }
 }

@@ -1,5 +1,7 @@
 package com.moong_bee.blog.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
 import com.moong_bee.blog.domain.Article;
@@ -15,5 +17,9 @@ public class BlogService {
 
     public Article save(AddArticleRequest request) {
         return blogRepository.save(request.toEntity());
+    }
+
+    public List<Article> findAll() {
+        return blogRepository.findAll();
     }
 }
