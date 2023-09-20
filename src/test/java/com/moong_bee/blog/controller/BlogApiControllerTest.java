@@ -58,7 +58,8 @@ public class BlogApiControllerTest {
 
         final String requestBody = objectMapper.writeValueAsString(userRequest);
 
-        ResultActions result = mockMvc.perform(post(url).contentType(MediaType.APPLICATION_JSON_VALUE).content(requestBody));
+        ResultActions result = mockMvc
+                .perform(post(url).contentType(MediaType.APPLICATION_JSON_VALUE).content(requestBody));
 
         result.andExpect(status().isCreated());
 
@@ -77,15 +78,35 @@ public class BlogApiControllerTest {
         final String content = "content";
 
         blogRepository.save(Article.builder()
-                                .title(title)
-                                .content(content)
-                                .build());
+                .title(title)
+                .content(content)
+                .build());
 
         final ResultActions resultActions = mockMvc.perform(get(url).accept(MediaType.APPLICATION_JSON));
 
         resultActions
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].content").value(content))
-            .andExpect(jsonPath("$[0].title").value(title));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].content").value(content))
+                .andExpect(jsonPath("$[0].title").value(title));
+    }
+
+    @DisplayName("findArticle: 블로그 글 조회")
+    @Test
+    public void findArticle() throws Exception {
+        final String url = "/api/articles/{id}";
+        final String title = "title";
+        final String content = "content";
+
+        Article savedArticle = blogRepository.save(Article.builder()
+                .title(title)
+                .content(content)
+                .build());
+
+        final ResultActions resultActions = mockMvc.perform(get(url, savedArticle.getId()));
+
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").value(content))
+                .andExpect(jsonPath("$.title").value(title));
     }
 }
