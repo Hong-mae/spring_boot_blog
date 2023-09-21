@@ -30,10 +30,20 @@ public class Article {
     @Column(name = "date", nullable = false)
     private LocalDateTime date;
 
+    @Column(name = "isUpdate", nullable = false)
+    private Boolean isUpdate = false;
+
     @Builder
     public Article(String title, String content) {
         this.title = title;
         this.content = content;
         this.date = LocalDateTime.now();
+    }
+
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+        this.date = LocalDateTime.now();
+        this.isUpdate = true;
     }
 }

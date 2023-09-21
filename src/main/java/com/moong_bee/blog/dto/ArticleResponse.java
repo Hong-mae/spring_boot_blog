@@ -11,10 +11,12 @@ public class ArticleResponse {
     private final String title;
     private final String content;
     private final LocalDateTime date;
+    private final Boolean isUpdate;
 
     public ArticleResponse(Article article) {
         this.title = article.getTitle();
         this.content = article.getContent();
         this.date = article.getDate();
+        this.isUpdate = article.getIsUpdate();
     }
 }
