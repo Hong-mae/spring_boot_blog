@@ -1,3 +1,3 @@
-INSERT INTO article (title, content, date, is_update) VALUES ('제목 1', '내용 1', CURRENT_TIMESTAMP(), false)
-INSERT INTO article (title, content, date, is_update) VALUES ('제목 1', '내용 1', CURRENT_TIMESTAMP(), false)
-INSERT INTO article (title, content, date, is_update) VALUES ('제목 1', '내용 1', CURRENT_TIMESTAMP(), false)
+INSERT INTO article (title, content, created_at, updated_at) VALUES ('제목 1', '내용 1', NOW(), NOW())
+INSERT INTO article (title, content, created_at, updated_at) VALUES ('제목 1', '내용 1', NOW(), NOW())
+INSERT INTO article (title, content, created_at, updated_at) VALUES ('제목 1', '내용 1', NOW(), NOW())

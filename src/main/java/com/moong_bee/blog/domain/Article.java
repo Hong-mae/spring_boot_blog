@@ -27,23 +27,22 @@ public class Article {
     @Column(name = "content", nullable = false)
     private String content;
 
-    @Column(name = "date", nullable = false)
-    private LocalDateTime date;
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    @Column(name = "isUpdate", nullable = false)
-    private Boolean isUpdate = false;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @Builder
     public Article(String title, String content) {
         this.title = title;
         this.content = content;
-        this.date = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 
     public void update(String title, String content) {
         this.title = title;
         this.content = content;
-        this.date = LocalDateTime.now();
-        this.isUpdate = true;
+        this.updatedAt = LocalDateTime.now();
     }
 }
