@@ -8,8 +8,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import com.moong_bee.blog.service.UserDetailService;
 
@@ -22,41 +24,29 @@ public class WebSecurityConfig {
 
     @Bean
     public WebSecurityCustomizer configure() {
-        return (web) -> web.ignoring().requestMatchers(toH2Console()).requestMatchers("/static/**");
+        return (web) -> web.ignoring().requestMatchers(toH2Console())
+                .requestMatchers(new AntPathRequestMatcher("/static/**"));
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http// authorizeRequest() deprecated 오류 해결(링크 : https://sennieworld.tistory.com/109)
-                .authorizeHttpRequests()// 인증 인가 설정
-                .requestMatchers("/login", "/signup", "/user").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .formLogin()// 폼 기반 로그인 설정
+        http.authorizeHttpRequests((authorize) -> authorize
+                .requestMatchers(new AntPathRequestMatcher("/login"), new AntPathRequestMatcher("/signup"),
+                        new AntPathRequestMatcher("/user"))
+                .permitAll()
+                .anyRequest().authenticated());
+
+        http.formLogin(formLogin -> formLogin
                 .loginPage("/login")
-                .defaultSuccessUrl("/articles")
-                .and()
-                .logout()// 로그아웃 설정
-                .logoutSuccessUrl("/login")
-                .invalidateHttpSession(true)
-                .and()
-                .csrf().disable() // csrf 비활성화
-                .build();
-        // return http
-        // .authorizeHttpRequests()
-        // .requestMatchers("/login", "/signup", "/user").permitAll()
-        // .anyRequest().authenticated()
-        // .and()
-        // .formLogin()
-        // .loginPage("/login")
-        // .defaultSuccessUrl("/articles")
-        // .and()
-        // .logout()
-        // .logoutSuccessUrl("/login")
-        // .invalidateHttpSession(true)
-        // .and()
-        // .csrf().disable()
-        // .build();
+                .defaultSuccessUrl("/articles"));
+
+        http.logout(logout -> logout
+                .logoutSuccessUrl("/signup")
+                .invalidateHttpSession(true));
+
+        http.csrf(AbstractHttpConfigurer::disable);
+
+        return http.build();
     }
 
     @Bean
