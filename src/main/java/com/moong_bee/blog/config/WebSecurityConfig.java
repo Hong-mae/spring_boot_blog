@@ -20,47 +20,49 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Configuration
 public class WebSecurityConfig {
-    private final UserDetailService userService;
+        private final UserDetailService userService;
 
-    @Bean
-    public WebSecurityCustomizer configure() {
-        return (web) -> web.ignoring().requestMatchers(toH2Console())
-                .requestMatchers(new AntPathRequestMatcher("/static/**"));
-    }
+        @Bean
+        public WebSecurityCustomizer configure() {
+                return (web) -> web.ignoring().requestMatchers(toH2Console())
+                                .requestMatchers(new AntPathRequestMatcher("/static/**"));
+        }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests((authorize) -> authorize
-                .requestMatchers(new AntPathRequestMatcher("/login"), new AntPathRequestMatcher("/signup"),
-                        new AntPathRequestMatcher("/user"))
-                .permitAll()
-                .anyRequest().authenticated());
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http.authorizeHttpRequests((authorize) -> authorize
+                                .requestMatchers(new AntPathRequestMatcher("/login"),
+                                                new AntPathRequestMatcher("/signup"),
+                                                new AntPathRequestMatcher("/user"))
+                                .permitAll()
+                                .anyRequest().authenticated());
 
-        http.formLogin(formLogin -> formLogin
-                .loginPage("/login")
-                .defaultSuccessUrl("/articles"));
+                http.formLogin(formLogin -> formLogin
+                                .loginPage("/login")
+                                .defaultSuccessUrl("/articles"));
 
-        http.logout(logout -> logout
-                .logoutSuccessUrl("/signup")
-                .invalidateHttpSession(true));
+                http.logout(logout -> logout
+                                .logoutSuccessUrl("/signup")
+                                .invalidateHttpSession(true));
 
-        http.csrf(AbstractHttpConfigurer::disable);
+                http.csrf(AbstractHttpConfigurer::disable);
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http, BCryptPasswordEncoder bCryptPasswordEncoder,
-            UserDetailService userDetailService) throws Exception {
-        return http.getSharedObject(AuthenticationManagerBuilder.class)
-                .userDetailsService(userService)
-                .passwordEncoder(bCryptPasswordEncoder)
-                .and()
-                .build();
-    }
+        @Bean
+        public AuthenticationManager authenticationManager(HttpSecurity http,
+                        BCryptPasswordEncoder bCryptPasswordEncoder,
+                        UserDetailService userDetailService) throws Exception {
+                return http.getSharedObject(AuthenticationManagerBuilder.class)
+                                .userDetailsService(userService)
+                                .passwordEncoder(bCryptPasswordEncoder)
+                                .and()
+                                .build();
+        }
 
-    @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+        @Bean
+        public BCryptPasswordEncoder bCryptPasswordEncoder() {
+                return new BCryptPasswordEncoder();
+        }
 }
