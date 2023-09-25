@@ -13,6 +13,7 @@ import com.moong_bee.blog.service.BlogService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RequiredArgsConstructor
 @Controller
@@ -36,5 +37,17 @@ public class BlogViewController {
 
         return "article";
 
+    }
+
+    @GetMapping("/new-article")
+    public String newArticle(@RequestParam(required = false) Long id, Model model) {
+        if (id == null) {
+            model.addAttribute("article", new ArticleViewResponse());
+        } else {
+            Article article = blogService.findById(id);
+            model.addAttribute("article", new ArticleViewResponse(article));
+        }
+
+        return "newArticle";
     }
 }

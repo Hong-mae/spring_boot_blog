@@ -2,6 +2,10 @@ package com.moong_bee.blog.domain;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -27,9 +31,11 @@ public class Article {
     @Column(name = "content", nullable = false)
     private String content;
 
+    @CreatedDate
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
