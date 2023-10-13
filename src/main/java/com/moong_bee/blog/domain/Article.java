@@ -38,16 +38,18 @@ public class Article {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "author", nullable = false)
+    private String author;
+
     @Builder
-    public Article(String title, String content) {
+    public Article(String title, String content, String author) {
+        this.author = author;
         this.title = title;
         this.content = content;
-        this.createdAt = LocalDateTime.now();
     }
 
     public void update(String title, String content) {
         this.title = title;
         this.content = content;
-        this.updatedAt = LocalDateTime.now();
     }
 }

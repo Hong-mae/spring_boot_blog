@@ -8,16 +8,21 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -25,137 +30,155 @@ import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moong_bee.blog.domain.Article;
+import com.moong_bee.blog.domain.User;
 import com.moong_bee.blog.dto.AddArticleRequest;
 import com.moong_bee.blog.dto.UpdateArticleRequest;
 import com.moong_bee.blog.repository.BlogRepository;
+import com.moong_bee.blog.repository.UserRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 public class BlogApiControllerTest {
 
-    @Autowired
-    protected MockMvc mockMvc;
+	@Autowired
+	protected MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+	@Autowired
+	private ObjectMapper objectMapper;
 
-    @Autowired
-    private WebApplicationContext context;
+	@Autowired
+	private WebApplicationContext context;
 
-    @Autowired
-    BlogRepository blogRepository;
+	@Autowired
+	BlogRepository blogRepository;
 
-    @BeforeEach
-    public void mockMvcSetUp() {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+	@Autowired
+	UserRepository userRepository;
 
-        blogRepository.deleteAll();
-    }
+	User user;
 
-    @DisplayName("addArticle: 블로그 글 추가")
-    @Test
-    public void addArticle() throws Exception {
-        final String url = "/api/articles";
-        final String title = "title";
-        final String content = "content";
-        final AddArticleRequest userRequest = new AddArticleRequest(title, content);
+	@BeforeEach
+	public void mockMvcSetUp() {
+		this.mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
 
-        final String requestBody = objectMapper.writeValueAsString(userRequest);
+		blogRepository.deleteAll();
+	}
 
-        ResultActions result = mockMvc
-                .perform(post(url).contentType(MediaType.APPLICATION_JSON_VALUE).content(requestBody));
+	@BeforeEach
+	void setSecurityContext() {
+		userRepository.deleteAll();
+		user = userRepository.save(User.builder()
+				.email("user@gmail.com")
+				.password("test")
+				.build());
 
-        result.andExpect(status().isCreated());
+		SecurityContext context = SecurityContextHolder.getContext();
+		context.setAuthentication(
+				new UsernamePasswordAuthenticationToken(user, user.getPassword(), user.getAuthorities()));
+	}
 
-        List<Article> articles = blogRepository.findAll();
+	@DisplayName("addArticle: 블로그 글 추가")
+	@Test
+	public void addArticle() throws Exception {
+		final String url = "/api/articles";
+		final String title = "title";
+		final String content = "content";
+		final AddArticleRequest userRequest = new AddArticleRequest(title, content);
 
-        assertThat(articles.size()).isEqualTo(1);
-        assertThat(articles.get(0).getTitle()).isEqualTo(title);
-        assertThat(articles.get(0).getContent()).isEqualTo(content);
-    }
+		final String requestBody = objectMapper.writeValueAsString(userRequest);
 
-    @DisplayName("findAllArticles: 블로그 글 목록 조회")
-    @Test
-    public void findAllArticles() throws Exception {
-        final String url = "/api/articles";
-        final String title = "title";
-        final String content = "content";
+		Principal principal = Mockito.mock(Principal.class);
+		Mockito.when(principal.getName()).thenReturn("username");
 
-        blogRepository.save(Article.builder()
-                .title(title)
-                .content(content)
-                .build());
+		ResultActions result = mockMvc
+				.perform(post(url).contentType(MediaType.APPLICATION_JSON_VALUE).principal(principal)
+						.content(requestBody));
 
-        final ResultActions resultActions = mockMvc.perform(get(url).accept(MediaType.APPLICATION_JSON));
+		result.andExpect(status().isCreated());
 
-        resultActions
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].content").value(content))
-                .andExpect(jsonPath("$[0].title").value(title));
-    }
+		List<Article> articles = blogRepository.findAll();
 
-    @DisplayName("findArticle: 블로그 글 조회")
-    @Test
-    public void findArticle() throws Exception {
-        final String url = "/api/articles/{id}";
-        final String title = "title";
-        final String content = "content";
+		assertThat(articles.size()).isEqualTo(1);
+		assertThat(articles.get(0).getTitle()).isEqualTo(title);
+		assertThat(articles.get(0).getContent()).isEqualTo(content);
+	}
 
-        Article savedArticle = blogRepository.save(Article.builder()
-                .title(title)
-                .content(content)
-                .build());
+	@DisplayName("findAllArticles: 블로그 글 목록 조회")
+	@Test
+	public void findAllArticles() throws Exception {
+		final String url = "/api/articles";
 
-        final ResultActions resultActions = mockMvc.perform(get(url, savedArticle.getId()));
+		Article savedArticle = createDefaultArticle();
 
-        resultActions
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").value(content))
-                .andExpect(jsonPath("$.title").value(title));
-    }
+		final ResultActions resultActions = mockMvc.perform(get(url).accept(MediaType.APPLICATION_JSON));
 
-    @DisplayName("deleteArticle: 블로그 글 삭제")
-    @Test
-    public void deleteArticle() throws Exception {
-        final String url = "/api/articles/{id}";
-        final String title = "title";
-        final String content = "content";
+		resultActions
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].content").value(savedArticle.getContent()))
+				.andExpect(jsonPath("$[0].title").value(savedArticle.getTitle()));
+	}
 
-        Article savedArticle = blogRepository.save(Article.builder()
-                .title(title)
-                .content(content)
-                .build());
+	@DisplayName("findArticle: 블로그 글 조회")
+	@Test
+	public void findArticle() throws Exception {
+		final String url = "/api/articles/{id}";
+		final String title = "title";
+		final String content = "content";
 
-        mockMvc.perform(delete(url, savedArticle.getId()))
-                .andExpect(status().isOk());
+		Article savedArticle = createDefaultArticle();
 
-        List<Article> articles = blogRepository.findAll();
+		final ResultActions resultActions = mockMvc.perform(get(url, savedArticle.getId()));
 
-        assertThat(articles).isEmpty();
-    }
+		resultActions
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content").value(content))
+				.andExpect(jsonPath("$.title").value(title));
+	}
 
-    @DisplayName("updateArticle: 블로그 글 수정")
-    @Test
-    public void updateArticle() throws Exception {
-        final String url = "/api/articles/{id}";
-        final String title = "title";
-        final String content = "content";
+	@DisplayName("deleteArticle: 블로그 글 삭제")
+	@Test
+	public void deleteArticle() throws Exception {
+		final String url = "/api/articles/{id}";
 
-        Article savedArticle = blogRepository.save(Article.builder().title(title).content(content).build());
+		Article savedArticle = createDefaultArticle();
 
-        final String newTitle = "new title";
-        final String newContent = "new content";
+		mockMvc.perform(delete(url, savedArticle.getId()))
+				.andExpect(status().isOk());
 
-        UpdateArticleRequest request = new UpdateArticleRequest(newTitle, newContent, LocalDateTime.now());
+		List<Article> articles = blogRepository.findAll();
 
-        ResultActions result = mockMvc.perform(put(url, savedArticle.getId())
-                .contentType(MediaType.APPLICATION_JSON_VALUE).content(objectMapper.writeValueAsString(request)));
+		assertThat(articles).isEmpty();
+	}
 
-        result.andExpect(status().isOk());
+	@DisplayName("updateArticle: 블로그 글 수정")
+	@Test
+	public void updateArticle() throws Exception {
+		final String url = "/api/articles/{id}";
 
-        Article article = blogRepository.findById(savedArticle.getId()).get();
+		Article savedArticle = createDefaultArticle();
 
-        assertThat(article.getTitle()).isEqualTo(newTitle);
-        assertThat(article.getContent()).isEqualTo(newContent);
-    }
+		final String newTitle = "new title";
+		final String newContent = "new content";
+
+		UpdateArticleRequest request = new UpdateArticleRequest(newTitle, newContent, LocalDateTime.now());
+
+		ResultActions result = mockMvc.perform(put(url, savedArticle.getId())
+				.contentType(MediaType.APPLICATION_JSON_VALUE)
+				.content(objectMapper.writeValueAsString(request)));
+
+		result.andExpect(status().isOk());
+
+		Article article = blogRepository.findById(savedArticle.getId()).get();
+
+		assertThat(article.getTitle()).isEqualTo(newTitle);
+		assertThat(article.getContent()).isEqualTo(newContent);
+	}
+
+	private Article createDefaultArticle() {
+		return blogRepository.save(Article.builder()
+				.title("title")
+				.author(user.getUsername())
+				.content("content")
+				.build());
+	}
 }
